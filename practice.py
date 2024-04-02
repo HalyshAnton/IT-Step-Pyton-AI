@@ -1,81 +1,49 @@
-# Багаторівневе успадкування
-class GrandParent:
-    def go(self):
-        print('I go')
+class DiscountCalculator:
+    def __init__(self, discount):
+        '''
+        :param discount: відсоток знижки
+        '''
 
-    def method(self):
-        print('GrandParent method')
+        self._discount = discount / 100
 
-
-class Parent(GrandParent):
-    def walk(self):
-        print('I walk')
-
-    def go(self):
-        print('Parent go')
-
-    def method(self):
-        print('Parent method')
+    def __call__(self, price):
+        new_price = price - (price * self._discount)
+        # new_price = price * (1 - self._discount)
+        return new_price
 
 
-class Child(Parent):
-    def method(self):
-        print('Child method')
-
-
-# child = Child()
-# child.go()
-# child.walk()
-# child.method()
-
-
-# Множинне успадкування
-class ClassA:
-    def methodA(self):
-        print('hello from A')
-
-    def method(self):
-        print('method from A')
-
-
-class ClassB:
-    def methodB(self):
-        print('hello from B')
-
-    def method(self):
-        print('method from B')
-
-
-class ClassC(ClassA, ClassB):
-    def methodA(self):
-        print('modified methodA')
-
-    def get_super(self):
-        print(super().methodA())
-
-
-obj = ClassC()
-# obj.methodA()
-# obj.methodB()
-# obj.method()
-
-# print(Child.__mro__)
+# calculator1 = DiscountCalculator(20)
+# print(calculator1(50))
+# print(calculator1(100))
+# print(calculator1(360))
+# print()
 #
-# print(Child.mro())
-# child = Child()
-# child.method()
+# calculator2 = DiscountCalculator(15)
+# print(calculator2(50))
+# print(calculator2(100))
+# print(calculator2(360))
 
-# import time
-# print(type(time).__mro__)
-#
-#
-# def func():
-#     return 1
-#
-# print(type(func))
-#
-# func.attr = 3
-# print(func.attr)
+class Demo:
+    def __init__(self, func):
+        self.func = func
+        print("Привіт з конструктора!")
 
-#print(ClassC.mro())
-print(obj.get_super())
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
+        print("Привіт з функтора!")
+
+
+@Demo
+def decor(*args):
+    print("Тест декоратора", *args)
+
+#decor = Demo(decor)
+
+
+decor(1, 2, 'asd')
+print(type(decor))
+
+calculator = DiscountCalculator(20)
+calculator.__dict__['_discount'] = 0.3 # calculator._discount = 0.3
+print(calculator.__dict__)
+print(calculator._discount)

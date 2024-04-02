@@ -1,54 +1,58 @@
-class UIElement:
-    def __init__(self, functionality):
-        self.functionality = functionality
+class ImageResizer:
+    def __init__(self, width, height, max_width=1000, max_height=1000):
+        self._width = width
+        self._height = height
+        self._max_width = max_width
+        self._max_height = max_height
 
-    def display(self):
-        print('display UIElement')
+    @property
+    def width(self):
+        print('property from width')
+        return self._width
+
+    @width.getter
+    def width(self):
+        print('width.getter')
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        print('width.setter')
+        if value <= self._max_width:
+            self._width = value
+        else:
+            raise ValueError('bad value')
+
+    @property
+    def height(self):
+        print('property from height')
+        return self._height
+
+    @height.getter
+    def height(self):
+        print('height.getter')
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        print('height.setter')
+        if value <= self._max_height:
+            self._height = value
+        else:
+            raise ValueError('bad value')
+
+    @height.deleter
+    def height(self):
+        print('hello from deleter')
+        del self._height
+        #self._height = None
 
 
-class InteractiveElement:
-    def __init__(self, a, b):
-        pass
+resizer = ImageResizer(0, 0, 1200, 1600)
+# resizer.width = 10
+# print(resizer.width)
 
-    def click(self):
-        print('click, click')
-
-
-class Button(UIElement, InteractiveElement):
-    def __init__(self, functionality, label):
-        super().__init__(functionality)
-        self.label = label
-
-    def display(self):
-        print('display button')
-
-
-class Menu(UIElement, InteractiveElement):
-    def __init__(self, functionality, info):
-        super().__init__(functionality)
-        self.info = info
-
-    def display(self):
-        print('display Menu')
-
-
-class FieldInput(UIElement, InteractiveElement):
-    def __init__(self, functionality, text):
-        super().__init__(functionality)
-        self.text = text
-
-    def display(self):
-        print('display Field')
-
-
-button = Button('', 'Open')
-menu = Menu('', 'very useful program')
-field = FieldInput('', 'Your login')
-
-button.display()
-menu.display()
-field.display()
-
-button.click()
-menu.click()
-field.click()
+print(resizer.height)
+# resizer.height = 10
+# del resizer.height
+# del resizer.width
