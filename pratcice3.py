@@ -1,47 +1,29 @@
-# class MyDescriptor:
-#     def __get__(self, instance, owner):
-#         print("Getting the attribute")
-#         print(self)
-#         print(instance)
-#         print(owner)
-#
-#     def __set__(self, instance, value):
-#         print("Setting the attribute")
-#
-#
-# class MyClass:
-#     attr = MyDescriptor()
-#
-#     @classmethod
-#     def method(cls):
-#         pass
-#
-#
-# obj = MyClass()
-# obj.attr
+class MyMeta(type):
+    needed_methods = ['info', 'get_name']
 
-class MyDescriptor:
-    def __init__(self, amount):
-        print('descriptor init')
-        self._amount = amount
+    def __new__(cls, name, bases, dct):
+        for method_name in cls.needed_methods:
+            if method_name not in dct:
+                raise AttributeError(f'There is no method {method_name} in class {name}')
+            if not callable(dct[method_name]):
+                raise AttributeError(f'{method_name} is not callable in class {name}')
 
-    def __get__(self, instance, owner):
-        print('descriptor get')
-        return self._amount
-
-    def __set__(self, instance, value):
-        print('descriptor set')
-        if value >= 0:
-            self._amount = value
-        else:
-            raise ValueError('negative value')
+        return super().__new__(cls, name, bases, dct)
 
 
-class FinancialData:
-    amount = MyDescriptor(10)
+class Person(metaclass=MyMeta):
+    age = 20
+    name = 'Mary'
+
+    def info(self):
+        print(f'Name: {self.name}, age: {self.age}')
+
+    def get_name(self):
+        return self.name
 
 
-obj = FinancialData()
-print(obj.amount)
-obj.amount = 100
-print(obj.amount)
+class Person1(metaclass=MyMeta):
+    info = 10
+    get_name = 10
+
+# print(callable(print))
