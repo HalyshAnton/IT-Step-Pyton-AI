@@ -1,19 +1,38 @@
-class MyMeta(type):
-    def __new__(cls, name, bases, dct):
-        dct['country'] = "Ukraine"
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
-        if 'name' not in dct:
-            raise AttributeError('There is no attribute name')
-
-        return super().__new__(cls, name, bases, dct)
-
-
-class Person(metaclass=MyMeta):
-    age = 20
-    # name = 'Mary'
-
-    def info(self):
-        print(f'Name: {self.name}, age: {self.age}')
+    def __str__(self):
+        return f'{self.data} -> {self.next}'
 
 
-print(Person.country)
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def __str__(self):
+        return str(self.head)
+
+    def append(self, data):
+        new_node = Node(data)
+
+        if self.head is None:
+            self.head = new_node
+            return
+
+        tail = self.head
+        while tail.next is not None:
+            tail = tail.next
+
+        tail.next = new_node
+
+
+my_list = LinkedList()
+my_list.append(1)
+my_list.append(2)
+my_list.append(3)
+my_list.append(4)
+my_list.append(5)
+
+print(my_list)

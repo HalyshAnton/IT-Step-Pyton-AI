@@ -1,29 +1,38 @@
-class MyMeta(type):
-    needed_methods = ['info', 'get_name']
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
-    def __new__(cls, name, bases, dct):
-        for method_name in cls.needed_methods:
-            if method_name not in dct:
-                raise AttributeError(f'There is no method {method_name} in class {name}')
-            if not callable(dct[method_name]):
-                raise AttributeError(f'{method_name} is not callable in class {name}')
-
-        return super().__new__(cls, name, bases, dct)
+    def __str__(self):
+        return f'{self.data} -> {self.next}'
 
 
-class Person(metaclass=MyMeta):
-    age = 20
-    name = 'Mary'
+class LinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
 
-    def info(self):
-        print(f'Name: {self.name}, age: {self.age}')
+    def __str__(self):
+        return str(self.head)
 
-    def get_name(self):
-        return self.name
+    def append(self, data):
+        new_node = Node(data)
+
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+            return
+
+        self.tail.next = new_node
+        self.tail = new_node
 
 
-class Person1(metaclass=MyMeta):
-    info = 10
-    get_name = 10
 
-# print(callable(print))
+my_list = LinkedList()
+my_list.append(1)
+my_list.append(2)
+my_list.append(3)
+my_list.append(4)
+my_list.append(5)
+
+print(my_list)

@@ -1,45 +1,41 @@
-# cache = {(method_name, args, kwargs): result}
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+        self.prev = None
 
 
-class MyMeta(type):
-    cache = {}
+class DoubleLinkedList:
+    def __init__(self):
+        self.head = None
 
-    def __new__(cls, name, bases, dct):
-        for method_name, method in dct.items():
-            if callable(method):
-                dct[method_name] = cls.cache_decor(method)
+    def print(self):
+        node = self.head
 
-        return super().__new__(cls, name, bases, dct)
+        while node is not None:
+            print(node.data, end='->')
+            node = node.next
 
-    @staticmethod
-    def cache_decor(method):
-        def decord_method(*args, **kwargs):
-            cache_data = (method.__name__, *args, tuple(kwargs.items()))
+    def append(self, data):
+        new_node = Node(data)
 
-            if cache_data in MyMeta.cache:
-                print('Known data')
-                return MyMeta.cache[cache_data]
+        if self.head is None:
+            self.head = new_node
+            return
 
-            print("New data")
-            result = method(*args, **kwargs)
-            MyMeta.cache[cache_data] = result
-            return result
+        tail = self.head
+        while tail.next is not None:
+            tail = tail.next
 
-        return decord_method
-
-
-class InfoSystem(metaclass=MyMeta):
-    def add(self, num1, num2):
-        return num1 + num2
+        tail.next = new_node
+        new_node.prev = tail
 
 
-obj = InfoSystem()
-print(obj.add(2, 2))
-print(obj.add(2, 2))
-print(obj.add(3, 5))
-print(obj.add(3, 3))
-print(obj.add(2, num2=2))
-print(obj.add(2, num2=2))
+my_list = DoubleLinkedList()
+my_list.append(1)
+my_list.append(2)
+my_list.append(3)
+my_list.append(4)
+my_list.append(5)
 
-for data, result in MyMeta.cache.items():
-    print(data, result)
+my_list.print()

@@ -1,40 +1,101 @@
-class MyMeta(type):
-    def __new__(cls, name, bases, dct):
-        for method_name, method in dct.items():
-            if callable(method):
-                dct[method_name] = cls.meta_decor(method)
-
-        return super().__new__(cls, name, bases, dct)
-
-    @staticmethod
-    def meta_decor(method):
-        def decored_method(*args, **kwargs):
-            print('hello from metaclass')
-            return method(*args, **kwargs)
-
-        return decored_method
+# Клас Node - представляє вузол списку з певними даними та посиланням на наступний (і попередній у двосв'язному) вузол
+class Node:
+    def __init__(self, data):
+        self.data = data  # Зберігаємо дані у вузлі
+        self.next = None  # Посилання на наступний вузол у списку
+        self.prev = None  # Посилання на попередній вузол у двосв'язному списку
 
 
-class Number(metaclass=MyMeta):
-    value = 10
+# Клас для черги реєстрації пасажирів
+class RegistrationQueue:
+    def __init__(self):
+        self.head = None
+        self.tail = None
 
-    def __add__(self, other):
-        return self.value + other.value
+    def append(self, data):
+        new_node = Node(data)
 
-    def __mul__(self, other):
-        return self.value * other.value
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+            return
 
-    def __sub__(self, other):
-        return self.value - other.value
+        self.tail.next = new_node
+        self.tail = new_node
 
-    def __truediv__(self, other):
-        return self.value / other.value
+    def print(self):
+        node = self.head
+
+        while node is not None:
+            print(node.data, end='->')
+            node = node.next
 
 
-num1 = Number()
-num2 = Number()
+# Клас для черги посадки пасажирів
+class BoardingQueue:
+    def __init__(self):
+        self.head = None
+        self.tail = None
 
-print(num1 + num2)
-print(num1 / num2)
-print(num1 - num2)
-print(num1 * num2)
+    def append(self, data):
+        new_node = Node(data)
+
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+            return
+
+        self.tail.next = new_node
+        new_node.prev = self.tail
+
+        self.tail = new_node
+
+    def move_forward(self, data):
+        # Знайти node з потрібним data
+        node = self.head
+
+        while node is not None and node.data != data:
+            node = node.next
+
+        if node is None:
+            print('Немає пасажира в черзі')
+            return
+
+        # Переміщення вперед
+
+        red = node.prev
+        green = node
+        blue = node.next
+        black = node.next.next # blue.next
+
+        # змінюємо посилання вперед
+        red.next, green.next, blue.next = blue, black, green
+
+        # змінюємо посилання назад
+        green.prev, blue.prev, black.prev = blue, red, green
+
+    def print(self):
+        node = self.head
+
+        while node is not None:
+            print(node.data, end='->')
+            node = node.next
+
+
+my_list = BoardingQueue()
+my_list.append(1)
+my_list.append(2)
+my_list.append(3)
+my_list.append(4)
+my_list.append(5)
+
+my_list.print()
+print()
+
+my_list.move_forward(3)
+my_list.print()
+print()
+
+my_list.move_forward(5)
+my_list.print()
+print()
