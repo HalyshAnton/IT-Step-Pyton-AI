@@ -163,3 +163,4 @@ print('1 вперед')
 my_list.move_forward(1)
 my_list.print()
 print()
+
