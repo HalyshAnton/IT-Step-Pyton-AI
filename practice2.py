@@ -1,38 +1,13 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-
-    def __str__(self):
-        return f'{self.data} -> {self.next}'
+from collections import deque
 
 
-class LinkedList:
-    def __init__(self):
-        self.head = None
+stack = deque()
 
-    def __str__(self):
-        return str(self.head)
+stack.append(1)
+stack.append(2)
+stack.append(3)
 
-    def append(self, data):
-        new_node = Node(data)
+print(f'{stack=}')
 
-        if self.head is None:
-            self.head = new_node
-            return
-
-        tail = self.head
-        while tail.next is not None:
-            tail = tail.next
-
-        tail.next = new_node
-
-
-my_list = LinkedList()
-my_list.append(1)
-my_list.append(2)
-my_list.append(3)
-my_list.append(4)
-my_list.append(5)
-
-print(my_list)
+print(f'Дістанемо останній елемент {stack.pop()}')
+print(f'{stack=}')

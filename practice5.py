@@ -1,41 +1,54 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-        self.prev = None
+examples = ['2 + (1-5)', '(2*[10-5] + (8-4))*(2-1)']
 
 
-class DoubleLinkedList:
-    def __init__(self):
-        self.head = None
+def naive(text):
+    num_type1 = 0
+    num_type2 = 0
+    num_type3 = 0
 
-    def print(self):
-        node = self.head
+    for char in text:
+        if char == '(': num_type1 += 1
+        elif char == '{': num_type2 += 1
+        elif char == '[': num_type3 += 1
 
-        while node is not None:
-            print(node.data, end='->')
-            node = node.next
+        if char == ')':
+            if num_type1 == 0:
+                return False
+            else:
+                num_type1 -= 1
 
-    def append(self, data):
-        new_node = Node(data)
+        elif char == '}':
+            if num_type2 == 0:
+                return False
+            else:
+                num_type2 -= 1
 
-        if self.head is None:
-            self.head = new_node
-            return
+        elif char == ']':
+            if num_type3 == 0:
+                return False
+            else:
+                num_type3 -= 1
 
-        tail = self.head
-        while tail.next is not None:
-            tail = tail.next
-
-        tail.next = new_node
-        new_node.prev = tail
+    return num_type1 == 0 and num_type2 == 0 and num_type3 == 0
 
 
-my_list = DoubleLinkedList()
-my_list.append(1)
-my_list.append(2)
-my_list.append(3)
-my_list.append(4)
-my_list.append(5)
+def check_with_stack(text):
+    stack = []
 
-my_list.print()
+    for char in text:
+        if char in '({[':
+            stack.append(char)
+        elif char in ')}]':
+            if len(stack) == 0:
+                return False
+            item = stack.pop()
+            pair = item + char
+
+            if pair not in ('()', '{}', '[]'):
+                return False
+
+    return len(stack) == 0
+
+
+for example in examples:
+    print(f'{example} - {check_with_stack(example)}')

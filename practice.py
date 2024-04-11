@@ -1,17 +1,10 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
+stack = []
 
-    def __str__(self):
-        return f'{self.data} -> {self.next}'
+stack.append(1)
+stack.append(2)
+stack.append(3)
 
+print(f'{stack=}')
 
-node1 = Node(12)
-node2 = Node(99)
-node3 = Node(37)
-
-node1.next = node2
-node2.next = node3
-
-print(node1)
+print(f'Дістанемо останній елемент {stack.pop()}')
+print(f'{stack=}')

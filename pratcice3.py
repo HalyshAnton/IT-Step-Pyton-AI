@@ -1,38 +1,12 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
+from queue import LifoQueue
 
-    def __str__(self):
-        return f'{self.data} -> {self.next}'
+stack = LifoQueue()
 
+stack.put(1)
+stack.put(2)
+stack.put(3)
 
-class LinkedList:
-    def __init__(self):
-        self.head = None
-        self.tail = None
+print(f'{stack=}')
 
-    def __str__(self):
-        return str(self.head)
-
-    def append(self, data):
-        new_node = Node(data)
-
-        if self.head is None:
-            self.head = new_node
-            self.tail = new_node
-            return
-
-        self.tail.next = new_node
-        self.tail = new_node
-
-
-
-my_list = LinkedList()
-my_list.append(1)
-my_list.append(2)
-my_list.append(3)
-my_list.append(4)
-my_list.append(5)
-
-print(my_list)
+print(f'Дістанемо останній елемент {stack.get()}')
+print(f'{stack=}')
