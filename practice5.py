@@ -1,54 +1,29 @@
-examples = ['2 + (1-5)', '(2*[10-5] + (8-4))*(2-1)']
+from queue import PriorityQueue
 
 
-def naive(text):
-    num_type1 = 0
-    num_type2 = 0
-    num_type3 = 0
+class TaskSolver:
+    def __init__(self):
+        self.queue = PriorityQueue()
 
-    for char in text:
-        if char == '(': num_type1 += 1
-        elif char == '{': num_type2 += 1
-        elif char == '[': num_type3 += 1
+    def add_task(self, task, priority):
+        self.queue.put((priority, task))
 
-        if char == ')':
-            if num_type1 == 0:
-                return False
-            else:
-                num_type1 -= 1
+    def solve_next_task(self):
+        if self.queue.empty():
+            print("Всі завдання виконані")
+            return
 
-        elif char == '}':
-            if num_type2 == 0:
-                return False
-            else:
-                num_type2 -= 1
+        priority, task = self.queue.get()
 
-        elif char == ']':
-            if num_type3 == 0:
-                return False
-            else:
-                num_type3 -= 1
-
-    return num_type1 == 0 and num_type2 == 0 and num_type3 == 0
+        print(f'Виконую {task}')
 
 
-def check_with_stack(text):
-    stack = []
+solver = TaskSolver()
 
-    for char in text:
-        if char in '({[':
-            stack.append(char)
-        elif char in ')}]':
-            if len(stack) == 0:
-                return False
-            item = stack.pop()
-            pair = item + char
+solver.add_task('Завдання 2', 2)
+solver.add_task('Завдання 3', 3)
+solver.add_task('Завдання 1', 1)
 
-            if pair not in ('()', '{}', '[]'):
-                return False
-
-    return len(stack) == 0
-
-
-for example in examples:
-    print(f'{example} - {check_with_stack(example)}')
+solver.solve_next_task()
+solver.solve_next_task()
+solver.solve_next_task()

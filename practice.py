@@ -1,10 +1,12 @@
-stack = []
+from queue import Queue
 
-stack.append(1)
-stack.append(2)
-stack.append(3)
+queue = Queue()
 
-print(f'{stack=}')
+queue.put(1)
+queue.put(2)
+queue.put(3)
 
-print(f'Дістанемо останній елемент {stack.pop()}')
-print(f'{stack=}')
+print(queue.get())
+print(queue.get())
+print(queue.get())
+print(queue.empty())
