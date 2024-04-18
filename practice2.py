@@ -1,57 +1,59 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
+import bintrees
 
 
-class Queue:
+class Book:
+    def __init__(self, title, author, year):
+       self.title = title
+       self.author = author
+       self.year = year
+
+    def __str__(self):
+        return f'"{self.title}" by {self.author}, {self.year}'
+
+
+class Library:
     def __init__(self):
-        self.head = None
-        self.tail = None
+        self.tree = bintrees.AVLTree()
 
-    def enqueue(self, data):
-        '''
-        Добавляє елемент в чергу
-        :param data:
-        :return: None
-        '''
+    def insert(self, title, author, year):
+        book = Book(title, author, year)
+        self.tree.insert(key=title, value=book)
 
-        node = Node(data)
-
-        if self.is_empty():
-            self.head = self.tail = node
-
+    def search(self, title):
+        if title in self.tree:
+            return self.tree[title]
         else:
-            self.tail.next = node
-            self.tail = node
+            print('Немає книги у бібліотеці')
 
-    def dequeue(self):
-        """
-        Повертає перший елемент
-        :return: data
-        """
+    def delete(self, title):
+        if title in self.tree:
+            self.tree.remove(title)
+        else:
+            print('Немає книги у бібліотеці')
 
-        if self.is_empty():
-            raise IndexError('Черга пуста')
+    def display(self):
+        for book in self.tree.values():
+            print(book)
 
-        data = self.head.data
-        self.head = self.head.next
-
-        if self.head is None:
-            self.tail = None
-
-        return data
-
-    def is_empty(self):
-        return self.head is None
+    def count(self):
+        return len(self.tree)
 
 
-queue = Queue()
+library = Library()
 
-queue.enqueue(1)
-queue.enqueue(2)
-queue.enqueue(3)
+library.insert("1984", "George Orwell", 1949)
+library.insert("To Kill a Mockingbird", "Harper Lee", 1960)
+library.insert("Pride and Prejudice", "Jane Austen", 1813)
 
-print(queue.dequeue())
+print("Books in library:")
+library.display()
 
+print("\nSearching for '1984':")
+book = library.search("1984")
+print(book)
 
+library.delete("To Kill a Mockingbird")
+print("\nBooks in library after deletion:")
+library.display()
+
+print("\nTotal number of books:", library.count())
