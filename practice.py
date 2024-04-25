@@ -1,20 +1,14 @@
-import pickle
+import json
 
 
-data = {"login": "gfkhd", "password": "1231534"}
+data = {"name": "John", 'age': 42, "info": {"city": "Kharkiv", "birthday": "2001"}}
 
-# serialized_data = pickle.dumps(data)
-#
-# print(serialized_data)
-#
-# read_data = pickle.loads(serialized_data)
-#
-# print(type(read_data), read_data)
 
-# with open('data.pickle', 'wb') as file:
-#     pickle.dump(data, file)
+# with open("data.json", 'w') as file:
+#     json.dump(data, file)
 
-with open('data.pickle', 'rb') as file:
-    read_data = pickle.load(file)
 
-print(type(read_data), read_data)
+with open("data.json", 'r') as file:
+    read_data = json.load(file)
+
+print(read_data)
