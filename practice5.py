@@ -1,14 +1,17 @@
 import multiprocessing as mp
+import time
 
 
 def print_info(info):
     for _ in range(10):
         print(info)
+        time.sleep(0.5)
 
 
 def sort_array(arr):
     for _ in range(10):
         print(sorted(arr))
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
