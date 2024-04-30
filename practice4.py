@@ -1,5 +1,6 @@
 import queue
 import threading
+import time
 
 
 def worker(thread_num):
@@ -11,8 +12,9 @@ def worker(thread_num):
         if task is None:
             break
 
-        print(f"Thread №{thread_num} work with {task}")
+        print(f"Thread №{thread_num} work with {task}\n", end='')
         tasks.task_done()
+        time.sleep(0.5)
 
 
 tasks = queue.Queue()
@@ -30,8 +32,6 @@ for i in range(num_threads):
     t.start()
     threads.append(t)
 
-tasks.join()
 
 for t in threads:
     t.join()
-

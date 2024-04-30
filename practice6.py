@@ -15,7 +15,7 @@ def get_parts(arr, num=mp.cpu_count()):
 
 
 def get_arr(len=100_000):
-    return list(range(1, len))
+    return list(range(len))
 
 
 if __name__ == '__main__':
@@ -27,6 +27,7 @@ if __name__ == '__main__':
 
     print(f"Results of pool {results}")
 
-    print(f"Final mean value {mean(results)}")
+    print(f"Computed mean value {mean(results)}")
+    print(f"Real mean value {mean(arr)}")
 
 
