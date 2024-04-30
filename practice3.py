@@ -1,52 +1,35 @@
-import json
+import threading
 
 
-class Person:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
-
-    def birthday(self):
-        self.age += 1
-
-    def print_info(self):
-        print(self.name, self.age)
-
-    def save(self, filename='person.json'):
-        dct = {"name": self.name,
-               "age": self.age}
-
-        with open(filename, 'w') as file:
-            json.dump(dct, file)
-
-    def load(self, filename='person.json'):
-        with open(filename, 'r') as file:
-            dct = json.load(file)
-
-        self.name = dct['name']
-        self.age = dct['age']
-
-    @classmethod
-    def load_person(cls, filename='person.json'):
-        with open(filename, 'r') as file:
-            dct = json.load(file)
-
-        return cls(name=dct['name'],
-                   age=dct['age'])
+global_list = []
+lock = threading.Lock()
 
 
-person = Person("Max", 16)
-# person.birthday()
-# person.birthday()
-# person.birthday()
-#
-# person.save()
-#
-# person.load()
-# person.print_info()
+def append():
+    for _ in range(100000):
+        global global_list
 
-person.save()
+        lock.acquire()
+        global_list.append(1)
+        lock.release()
 
-read_person = Person.load_person()
-read_person.print_info()
 
+def remove():
+    for _ in range(100000):
+        global global_list
+
+        lock.acquire()
+        global_list.pop()
+        lock.release()
+
+
+t1 = threading.Thread(target=append, args=())
+t2 = threading.Thread(target=remove, args=())
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+print(f"Final result {global_list}")

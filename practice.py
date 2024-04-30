@@ -1,14 +1,20 @@
-import json
+import threading
 
 
-data = {"name": "John", 'age': 42, "info": {"city": "Kharkiv", "birthday": "2001"}}
+def print_info(info):
+    print(info)
 
 
-# with open("data.json", 'w') as file:
-#     json.dump(data, file)
+def sort_array(arr):
+    print(sorted(arr))
 
 
-with open("data.json", 'r') as file:
-    read_data = json.load(file)
+t1 = threading.Thread(target=print_info, args=("Thread1",))
+t2 = threading.Thread(target=sort_array, args=([2, 3, 1, 5, 4],))
 
-print(read_data)
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+

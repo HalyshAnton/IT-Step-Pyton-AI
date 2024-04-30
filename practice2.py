@@ -1,16 +1,21 @@
-import json
+import threading
 
 
-class Person:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
-
-    def print_info(self):
-        print(self.name, self.age)
+def print_info(info):
+    for _ in range(10):
+        print(info)
 
 
-person = Person("Max", 16)
+def sort_array(arr):
+    for _ in range(10):
+        print(sorted(arr))
 
-with open("data.json", 'w') as file:
-    json.dump(person, file)
+
+t1 = threading.Thread(target=print_info, args=("Thread1",))
+t2 = threading.Thread(target=sort_array, args=([2, 3, 1, 5, 4],))
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()

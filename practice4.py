@@ -1,55 +1,37 @@
-import json
+import queue
+import threading
 
 
-class Person:
-    filename = 'persons.json'
+def worker(thread_num):
+    global tasks
 
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+    while True:
+        task = tasks.get()
 
-    def birthday(self):
-        self.age += 1
+        if task is None:
+            break
 
-    def print_info(self):
-        print(self.name, self.age)
-
-    def get_state_dict(self):
-        return {"name": self.name,
-                "age": self.age}
-
-    @classmethod
-    def save_persons(cls, persons):
-        data = []
-
-        for person in persons:
-            dct = person.get_state_dict()
-            data.append(dct)
-
-        #data = [person.get_state_dict() for person in persons]
-
-        with open(cls.filename, 'w') as file:
-            json.dump(data, file, indent=4)
-
-    @classmethod
-    def load_persons(cls):
-        with open(cls.filename, 'r') as file:
-            data = json.load(file)
-
-        persons = []
-        for dct in data:
-            person = cls(dct['name'], dct['age'])
-            persons.append(person)
-
-        return persons
+        print(f"Thread №{thread_num} work with {task}")
+        tasks.task_done()
 
 
-person1 = Person("Max", 16)
-person2 = Person("John", 42)
-person3 = Person("Mary", 25)
+tasks = queue.Queue()
+num_threads = 3
 
+for i in range(10):
+    tasks.put(f"Task {i+1}")
 
-Person.save_persons([person1, person2, person3])
+for _ in range(num_threads):
+    tasks.put(None)
 
-for read_person in Person.load_persons():
-    read_person.print_info()
+threads = []
+for i in range(num_threads):
+    t = threading.Thread(target=worker, args=(i+1,))
+    t.start()
+    threads.append(t)
+
+tasks.join()
+
+for t in threads:
+    t.join()
+
