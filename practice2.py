@@ -1,21 +1,23 @@
-import threading
+## Client
+
+import socket
 
 
-def print_info(info):
-    for _ in range(10):
-        print(info)
+client = socket.socket(socket.AF_INET,     # use IP4
+                       socket.SOCK_STREAM  # use TCP
+                       )
 
+client.connect(('127.0.0.1', 8080))
 
-def sort_array(arr):
-    for _ in range(10):
-        print(sorted(arr))
+while True:
+    data = input("Enter something: ")
 
+    client.send(data.encode())
 
-t1 = threading.Thread(target=print_info, args=("Thread1",))
-t2 = threading.Thread(target=sort_array, args=([2, 3, 1, 5, 4],))
+    if data == 'exit':
+        break
 
-t1.start()
-t2.start()
+    response = client.recv(1024).decode()
+    print(response)
 
-t1.join()
-t2.join()
+client.close()
