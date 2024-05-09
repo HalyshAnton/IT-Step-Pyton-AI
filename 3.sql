@@ -2,7 +2,7 @@
 SELECT MIN(AGE)
 FROM STUDENT;
 
--- -- ВИВЕСТИ ІНФОРМАЦІЮ ПРО СТУДЕНТА З ВІК ЯКОГО МІНІМАЛЬНИЙ
+-- -- ВИВЕСТИ ІНФОРМАЦІЮ ПРО СТУДЕНТА ВІК ЯКОГО МІНІМАЛЬНИЙ
 SELECT *
 FROM STUDENT
 WHERE AGE = (SELECT MIN(AGE)
