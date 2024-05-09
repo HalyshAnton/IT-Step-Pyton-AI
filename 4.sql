@@ -1,15 +1,31 @@
--- SELECT * -- УСІ СТОВПЧИКИ
--- SELECT FIRST_NAME, LAST_NAME  -- КОНКРЕТНІ СТОВПЧИКИ
--- SELECT FIRST_NAME + ' ' + LAST_NAME AS FULL_NAME  -- ПЕВНИЙ ВИРАЗ ПІД НОВИМ ІМЕНЕМ
-
--- SELECT *
--- FROM STUDENT
--- WHERE AGE > 25
-
--- SELECT *
--- FROM STUDENT
--- WHERE AGE BETWEEN 25 AND 30
-
-SELECT *
+-- ПІДРАХУВАТИ КІЛЬКІСТЬ СТУДЕНТІВ КОЖНОЇ ПРОФЕСІЙ
+SELECT JOB, COUNT(*)
 FROM STUDENT
-WHERE FIRST_NAME LIKE 'M%'
+GROUP BY JOB;
+
+-- ПІДРАХУВАТИ СЕРЕДНІЙ ВІК СТУДЕНТІВ КОЖНОЇ ПРОФЕСІЙ
+SELECT JOB, AVG(AGE) AS AVG_AGE
+FROM STUDENT
+GROUP BY JOB;
+
+-- ПІДРАХУВАТИ СЕРЕДНІЙ ВІК СТУДЕНТІВ КОЖНОЇ ПРОФЕСІЙ, АЛЕ НЕ ВКЮЧАТИ HENRY
+SELECT JOB, AVG(AGE) AS AVG_AGE
+FROM STUDENT
+WHERE FIRST_NAME != 'Henry'
+GROUP BY JOB;
+
+-- ПІДРАХУВАТИ СЕРЕДНІЙ ВІК СТУДЕНТІВ КОЖНОЇ ПРОФЕСІЙ. ДАНІ ВДСОРТУВАТИ
+SELECT JOB, AVG(AGE) AS AVG_AGE
+FROM STUDENT
+GROUP BY JOB
+ORDER BY AVG_AGE;  -- ASC АБО DESC
+
+SELECT JOB, AVG(AGE) AS AVG_AGE, COUNT(*) AS COUNT
+FROM STUDENT
+GROUP BY JOB
+ORDER BY COUNT, AVG_AGE;
+
+-- ПІДРАХУВАТИ КІЛЬКІСТЬ ПАР JOB, LAST_NAME
+SELECT JOB, LAST_NAME, COUNT(*)
+FROM STUDENT
+GROUP BY JOB, LAST_NAME
