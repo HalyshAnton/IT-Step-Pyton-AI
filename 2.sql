@@ -1,16 +1,7 @@
--- ВИВЕСТИ СЬОГОДНІШНЮ ДАТУ
--- SELECT CURRENT_DATE
+-- СТВОРЕННЯ ІНДЕКСУ ПО ДАТІ - ТЕ САМЕ ЩО І БІНАРНЕ ДЕРЕВО
+CREATE INDEX STUDENT_DATE_INDEX ON STUDENT (DATE_OF_BIRTH, AGE);
 
 
--- ВИВЕСТИ ВІК НА ОСНОВІ ДАТИ НАРОБЖЕННЯ
--- SELECT EXTRACT(YEAR FROM CURRENT_DATE - DATE_OF_BIRTH)
--- FROM STUDENT
-
-SELECT EXTRACT(YEAR FROM AGE(DATE_OF_BIRTH)) AS AGE_CALCULATED
+SELECT *
 FROM STUDENT
-
--- DATE
--- TIME
--- DATETIME
--- TIMESTAMP
--- INTERVAL
+WHERE DATE_OF_BIRTH < '2001-01-01'

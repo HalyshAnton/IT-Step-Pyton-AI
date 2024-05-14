@@ -1,22 +1,24 @@
--- добавити новий стовпчик разом з значеннями
-ALTER TABLE STUDENT
-ADD COLUMN DATE_OF_BIRTH DATE;
+-- ВИВЕСТИ ПРОФЕСІЮ, З НАЙМЕНШОЮ КІЛЬКІСТЮ СТУДЕНТІВ
 
-UPDATE STUDENT
-SET DATE_OF_BIRTH = '2000-03-24';
+-- СОРТУВАННЯ( ПОВІЛЬНО)
+SELECT JOB, COUNT(*) AS "JOB COUNT"
+FROM STUDENT
+GROUP BY JOB
+ORDER BY "JOB COUNT" DESC
+LIMIT 1;
 
--- добавити новий стовпчик разом з різними значеннями
-ALTER TABLE STUDENT
-ADD COLUMN JOB VARCHAR(20);
 
-UPDATE STUDENT
-SET JOB = 'TEACHER'
-WHERE AGE <= 26;
+--- ВИКОРИСТАННЯ ТИМЧАСОВОЇ ТАБЛИЦІ( ШВИДШЕ)
+WITH COUNTS_TABLE AS (
+	SELECT JOB, COUNT(*) AS "JOB COUNT"
+	FROM STUDENT
+	GROUP BY JOB
+)
 
-UPDATE STUDENT
-SET JOB = 'WORKER'
-WHERE AGE > 26;
+SELECT JOB
+FROM COUNTS_TABLE
+WHERE "JOB COUNT" = (
+	SELECT MAX("JOB COUNT")
+	FROM COUNTS_TABLE
+)
 
-UPDATE STUDENT
-SET JOB = 'PROGRAMMER'
-WHERE FIRST_NAME = 'Mia' AND LAST_NAME = 'Baker';
