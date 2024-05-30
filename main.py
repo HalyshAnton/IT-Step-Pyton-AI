@@ -1,109 +1,51 @@
-from sqlalchemy import create_engine, MetaData, insert, delete, update
-from sqlalchemy.orm import sessionmaker
-import json
+import redis
 
 
-with open('config.json', 'r') as f:
-    data = json.load(f)
-    db_user = data['user']  # postgres
-    db_password = data['password']
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
-db_url = f'postgresql+pg8000://{db_user}:{db_password}@localhost:5432/hospital'
-engine = create_engine(db_url)
+r.set('user:name', 'Alice')
+name = r.get('user:name')
+# print(name)
+# print(type(name))
 
-metadata = MetaData()
-metadata.reflect(bind=engine)
+r.set('user:age', 7)
+age = r.get('user:age')
+# print(age)
+# print(type(age))
 
-connection = engine.connect()
+# r.decr
+r.incr('user:age', 10)
+age = r.get('user:age')
+# r.incrby()
+# print(age)
+# print(type(age))
 
+r.geoadd('cities', (30.14, 50.25, 'Kyiv'))
+r.geoadd('cities', (10.58, 65.0, 'London'))
 
-def insert_row(table):
-    values = {}
+pos = r.geopos('cities', 'Kyiv', 'London')
+# print(pos)
+# print(type(pos[0][0]))
 
-    for column_name in table.columns.keys():
-        value = input(f'Введіть значення для стовпчика {column_name}: ')
+dist = r.geodist('cities', 'Kyiv', 'London', 'km')
+# print(dist)
+# print(type(dist))
+r.delete('items')
+r.rpush('items', 1, 2, 3)
+items = r.lrange('items', 0, -1)
+# print(items, type(items))
+r.delete('items')
 
-        if value != '':
-            values[column_name] = value
+r.sadd('items', 1, 2, 3)
+items = r.smembers('items')
+# print(items, type(items))
+r.delete('items')
 
-    query = insert(table).values(values)
-    connection.execute(query)
-    connection.commit()
+r.hset('items', 'name', 'Alice')
+r.hset('items', 'age', 12)
 
-    print('Everything is OK')
+r.hset('items', mapping={'ghjh': 2123, "ghjgjh": 'hjkj'})
 
-
-def update_data(table):
-    print('назви стовпчиків')
-    for column_name in table.columns.keys():
-        print('\t', column_name)
-
-    condition_column = input('введіть назву стовпчика для умови: ')
-    condition_value = input('введіть значення для вказаного стовпчика для умови: ')
-
-    # update where column==value
-    values = {}
-
-    for column_name in table.columns.keys():
-        value = input(f'Введіть значення для стовпчика {column_name}: ')
-
-        if value != '':
-            values[column_name] = value
-
-    column = getattr(table.c, condition_column)
-
-    query = update(table) \
-            .where(column == column.type.python_type(condition_value)) \
-            .values(values)
-
-    connection.execute(query)
-    connection.commit()
-
-
-def delete_data(table):
-    print('назви стовпчиків')
-    for column_name in table.columns.keys():
-        print('\t', column_name)
-
-    # condition_column = input('введіть назву стовпчика для умови: ')
-    # condition_value = input('введіть значення для вказаного стовпчика для умови: ')
-    #
-    # column = getattr(table.c, condition_column)
-    #
-    # query = delete(table).where(column == column.type.python_type(condition_value))
-
-    condition = input('введіть умову для одного стовпчика')
-    # premium < 20
-
-    query = delete(table).where(eval('table.c.' + condition))
-
-    connection.execute(query)
-    connection.commit()
-
-
-while True:
-    print('Таблиці з бази даних')
-    for table_name in metadata.tables.keys():
-        print(table_name)
-
-    table_name = input('Введіть назву таблиці: ')
-
-    if table_name in metadata.tables:
-        table = metadata.tables[table_name]
-
-        print('Оберіть функцію')
-        print('1 добавити рядок')
-        print('2 видалити дані')
-        print('3 змінити дані')
-
-        command = int(input('Номер функції: '))
-
-        if command == 1:
-            insert_row(table)
-        elif command == 2:
-            delete_data(table)
-        elif command == 3:
-            update_data(table)
-
-
-
+items = r.hgetall('items')
+print(items)
+print(type(items))

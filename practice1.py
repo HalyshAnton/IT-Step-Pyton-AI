@@ -1,144 +1,163 @@
-from sqlalchemy import create_engine, MetaData, func, and_, or_, extract
-from sqlalchemy.orm import sessionmaker
-import json
+import redis
 
 
-with open('config.json', 'r') as f:
-    data = json.load(f)
-    db_user = data['user']  # postgres
-    db_password = data['password']
+class ShoppingCart:
+    def __init__(self):
+        self.server = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        self.current_user = None
 
-db_url = f'postgresql+pg8000://{db_user}:{db_password}@localhost:5432/hospital'
-engine = create_engine(db_url)
+    def _get_user_item_key(self, item_id):
+        # return f'cart:{self.current_user}:{item_id}'
+        return f'{self.current_user}:{item_id}'
 
-metadata = MetaData()
-metadata.reflect(bind=engine)
+    def add_user(self, user, password):
+        if self.server.hexists('users', user):
+            print('User already exists')
+            return
 
-Session = sessionmaker(bind=engine)
-session = Session()
+        self.server.hset('users', user, password)
+
+    def login(self, user, password):
+        real_password = self.server.hget('users', user)
+
+        # print(f'{real_password=}')
+
+        if real_password and password == real_password:
+            print('login Ok')
+            self.current_user = user
+
+        else:
+            print('Wrong login or password')
+
+    def add_item(self, item_id, quantity=1):
+        # key = f'{self.current_user}:{item_id}'
+        #
+        # if self.server.exists(key):
+        #     print('Item is already in cart')
+        #     return
+        #
+        # self.server.hset(key, mapping={'id': item_id, 'quantity': quantity})
+
+        key = self._get_user_item_key(item_id)
+
+        if self.server.exists(key):
+            print('Item is already in cart')
+            self.server.hincrby(key, 'quantity', quantity)
+        else:
+            self.server.hset(key, mapping={'id': item_id, 'quantity': quantity})
+
+    def show_cart(self):
+        # keys = self.server.key(f'{self.current_user}:*')
+
+        pattern = self._get_user_item_key('*')
+        keys = self.server.keys(pattern)
+
+        if keys:
+            print('Cart')
+            for key in keys:
+                data = self.server.hgetall(key)
+                print(f'Item ID {data["id"]} -- {data["quantity"]} units')
+        else:
+            print('Cart is empty')
+
+    def delete_item(self, item_id):
+        key = self._get_user_item_key(item_id)
+
+        if self.server.exists(key):
+            self.server.delete(key)
+            print("Item is deleted")
+        else:
+            print('There is not item in the cart')
+
+    def clear_cart(self):
+        pattern = self._get_user_item_key('*')
+        keys = self.server.keys(pattern)
+
+        if keys:
+            for key in keys:
+                self.server.delete(key)
+            print('Cart is cleared')
+        else:
+            print('Cart is already empty')
+
+    def search_item(self, item_id):
+        key = self._get_user_item_key(item_id)
+
+        data = self.server.hgetall(key)
+
+        if data:
+            print('Item info from cart')
+            print(f'Item ID {data["id"]} -- {data["quantity"]} units')
+        else:
+            print('Item is not found')
+
+    def update_item(self, item_id, new_quantity):
+        key = self._get_user_item_key(item_id)
+
+        if self.server.exists(key):
+            self.server.hset(key, 'quantity', new_quantity)
+            print('Item quantity is updated')
+        else:
+            print('There is not item in the cart')
 
 
-docs = metadata.tables['doctors']
-specs = metadata.tables['specializations']
-docsspecs = metadata.tables['doctorsspecializations']
-doctors_vacations_table = metadata.tables['vacations']
-Departments = metadata.tables['departments']
-Sponsors = metadata.tables['sponsors']
-Donations = metadata.tables['donations']
-Wards = metadata.tables['wards']
-
-
-# звіт 1
-def report_doctor_specializations():
-    result = session.query(docs.c.name.label('doctorname'),
-                           docs.c.surname,
-                           specs.c.specialization_name) \
-             .join(docsspecs, docsspecs.c.doctor_id == docs.c.id) \
-             .join(specs, docsspecs.c.specialization_id == specs.c.id).all()
-
-    if result:
-        for row in result:
-            print(f"{row.doctorname} {row.surname} with specialization {row.specialization_name}")
-    else:
-        print('Пусто')
-
-    # and - &
-    # or - |
-    # not - ~
-    # (name == 'hjk') & (salary > 20)
-
-#звіт 2
-def report_doctors_salary_not_on_vacation():
-    query = session.query(docs.c.surname, docs.c.salary) \
-                   .outerjoin(doctors_vacations_table, (docs.c.id == doctors_vacations_table.c.doctor_id) &
-                              ((doctors_vacations_table.c.start_date <= func.current_date()) & (func.current_date() <= doctors_vacations_table.c.end_date))) \
-                   .filter(doctors_vacations_table.c.id == None)  # Фільтруємо тих, хто не в відпустці
-    result = query.all()
-    for row in result:
-        print(f"{row.surname} - {row.salary}")
-
-#звіт 3
-def report_wards_depatment():
-    department_name = input("Введіть назву відділення: ")
-
-    query = session.query(Wards.c.name) \
-        .join(Departments, Wards.c.department_id == Departments.c.id) \
-        .filter(Departments.c.name == department_name)
-
-    result = query.all()
-
-    if result:
-        print(f"Назви палат у відділенні '{department_name}':")
-        for row in result:
-            print(row.name)
-    else:
-        print(f"Відділення '{department_name}' або палати у цьому відділенні не знайдено.")
-
-#звіт 4
-def repor_donation_of_last_mounth():
-    # Введіть номер місяця (1-12)
-    month = int(input("Введіть номер місяця: "))
-
-    query = session.query(Departments.c.name.label('Department'), Sponsors.c.name.label('Sponsor'),
-                          Donations.c.amount.label('Amount'), Donations.c.date.label('DonationDate')) \
-                   .join(Donations, Departments.c.id == Donations.c.department_id) \
-                   .join(Sponsors, Sponsors.c.id == Donations.c.sponsor_id) \
-                   .filter(extract('month', Donations.c.date) == month)
-
-    result = query.all()
-
-    if result:
-        print(f"Усі пожертвування за {month}-й місяць:")
-        for row in result:
-            print(f"Відділення: {row.Department}, Спонсор: {row.Sponsor}, Сума: {row.Amount}, Дата: {row.DonationDate}")
-    else:
-        print(f"Пожертвувань за {month}-й місяць не знайдено.")
-#звіт 5
-def report_departaments_donation():
-    sponsor_name = input("Введіть назву спонсора: ")
-
-    query = session.query(Departments.c.name.label('Department')) \
-                   .distinct() \
-                   .join(Donations, Departments.c.id == Donations.c.department_id) \
-                   .join(Sponsors, Sponsors.c.id == Donations.c.sponsor_id) \
-                   .filter(Sponsors.c.name == sponsor_name)
-
-    result = query.all()
-
-    if result:
-        print(f"Назви відділень, які спонсоруються компанією '{sponsor_name}':")
-        for row in result:
-            print(row.Department)
-    else:
-        print(f"Відділень, які спонсоруються компанією '{sponsor_name}' не знайдено.")
-
+shopping_cart = ShoppingCart()
 
 while True:
-    print("1. Вивести повні імена лікарів та їх спеціалізації")
-    print("2. Вивести прізвища та зарплати лікарів, які не перебувають у відпустці")
-    print("3. Вивести назви палат, які знаходяться у певному відділенні;")
-    print("4. Вивести усі пожертвування за вказаний місяць у вигляді: відділення, спонсор, сума пожертвування, дата пожертвування;")
-    print("5. Вивести назви відділень без повторень, які спонсоруються певною компанією.")
+    print('Choose option')
+    print('1 add user')
+    print('2 login')
+    print('3 add item')
+    print('4 show cart')
+    print('5 delete item')
+    print('6 clear cart')
+    print('7 search item')
+    print('8 update item')
 
-    print("0. Вийти")
-    choice = input("Оберіть опцію: ")
+    command = int(input('enter command: '))
 
-    if choice == "1":
-        report_doctor_specializations()
-    elif choice == "2":
-        report_doctors_salary_not_on_vacation()
-    elif choice == "3":
-        report_wards_depatment()
-    elif choice == "4":
-        repor_donation_of_last_mounth()
-    elif choice == "5":
-        report_departaments_donation()
+    if command == 1:
+        user = input('user name: ')
+        password = input('password: ')
 
-    elif choice == "0":
-        break
-    else:
-        print("Невірний вибір. Будь ласка, оберіть знову.")
+        shopping_cart.add_user(user, password)
 
-# Закриваємо сесію
-session.close()
+    elif command == 2:
+        user = input('user name: ')
+        password = input('password: ')
+
+        shopping_cart.login(user, password)
+
+    elif command == 3:
+        item_id = int(input('enter item id: '))
+        quantity = int(input('enter item quantity: '))
+
+        shopping_cart.add_item(item_id, quantity)
+
+    elif command == 4:
+        shopping_cart.show_cart()
+
+    elif command == 5:
+        item_id = int(input('enter item id: '))
+
+        shopping_cart.delete_item(item_id)
+
+    elif command == 6:
+        shopping_cart.clear_cart()
+
+    elif command == 7:
+        item_id = int(input('enter item id: '))
+
+        shopping_cart.search_item(item_id)
+
+    elif command == 8:
+        item_id = int(input('enter item id: '))
+        quantity = int(input('enter item quantity: '))
+
+        shopping_cart.update_item(item_id, quantity)
+
+
+
+
+
 

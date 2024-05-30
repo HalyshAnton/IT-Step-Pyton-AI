@@ -10,11 +10,11 @@ with open('config.json') as f:
     config = json.load(f)
 
 # Отримання логіну та паролю з об'єкта конфігурації
-db_user = config['database']['user']
-db_password = config['database']['password']
+db_user = config['user']
+db_password = config['password']
 
 # Побудова URL для підключення до PostgreSQL
-db_url = f'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/Hospital'
+db_url = f'postgresql+pg8000://{db_user}:{db_password}@localhost:5432/hospital'
 engine = create_engine(db_url)
 
 # З'єднання з базою даних
