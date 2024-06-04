@@ -1,51 +1,202 @@
 import redis
 
 
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+class Museum:
+    def __init__(self, host='localhost', port=6379, db=0):
+        self.redis = redis.StrictRedis(host=host, port=port,
+                                       db=db, decode_responses=True)
+        self.current_admin = None
 
-r.set('user:name', 'Alice')
-name = r.get('user:name')
-# print(name)
-# print(type(name))
+    def _get_admins_key(self):
+        return 'museum:admins'
 
-r.set('user:age', 7)
-age = r.get('user:age')
-# print(age)
-# print(type(age))
+    def _get_exhibit_key(self, exhibit_id):
+        return f'musuem:exhibits:{exhibit_id}'
 
-# r.decr
-r.incr('user:age', 10)
-age = r.get('user:age')
-# r.incrby()
-# print(age)
-# print(type(age))
+    def _get_exhibit_people_key(self, exhibit_id):
+        return self._get_exhibit_key(exhibit_id) + ':related_people'
 
-r.geoadd('cities', (30.14, 50.25, 'Kyiv'))
-r.geoadd('cities', (10.58, 65.0, 'London'))
+    def _get_person_key(self, person_id):
+        return f'musuem:people:{person_id}'
 
-pos = r.geopos('cities', 'Kyiv', 'London')
-# print(pos)
-# print(type(pos[0][0]))
+    def _get_person_exhibits_key(self, person_id):
+        return self._get_person_key(person_id) + ':related_exhibits'
 
-dist = r.geodist('cities', 'Kyiv', 'London', 'km')
-# print(dist)
-# print(type(dist))
-r.delete('items')
-r.rpush('items', 1, 2, 3)
-items = r.lrange('items', 0, -1)
-# print(items, type(items))
-r.delete('items')
+    def _check_login(self):
+        if self.current_admin is None:
+            print('Ви не ввійшли як адміністратор')
+            return False
+        return True
 
-r.sadd('items', 1, 2, 3)
-items = r.smembers('items')
-# print(items, type(items))
-r.delete('items')
+    def add_admin(self, admin_id, password):
+        admins_key = self._get_admins_key()
 
-r.hset('items', 'name', 'Alice')
-r.hset('items', 'age', 12)
+        if self.redis.hexists(admins_key, admin_id):
+            print('Адміністратор вже існує')
+            return
 
-r.hset('items', mapping={'ghjh': 2123, "ghjgjh": 'hjkj'})
+        self.redis.hset(admins_key, admin_id, password)
+        print('Адміністратора додано')
 
-items = r.hgetall('items')
-print(items)
-print(type(items))
+    def login(self, admin_id, password):
+        admins_key = self._get_admins_key()
+
+        admin_password = self.redis.hget(admins_key, admin_id)
+
+        if admin_password is not None and password == admin_password:
+            print('Вхід дозволено')
+            self.current_admin = admin_id
+        else:
+            print('Невірний логін або пароль')
+
+    def add_exhibit(self, exhibit_id, exhibit_data):
+        if not self._check_login():
+            return
+
+        exhibit_key = self._get_exhibit_key(exhibit_id)
+
+        if self.redis.exists(exhibit_key):
+            print('Експонат вже є в базі даних музею')
+            return
+
+        data = {
+            'admin': self.current_admin,
+            'name': exhibit_data.get('name', ''),
+            'description': exhibit_data.get('description', ''),
+        }
+
+        self.redis.hset(exhibit_key, mapping=data)
+
+        exhibit_people_key = self._get_exhibit_people_key(exhibit_id)
+
+        people = exhibit_data.get('people', [])
+        self.redis.sadd(exhibit_people_key, *people)
+
+        for person_id in people:
+            person_exhibits_key = self._get_person_exhibits_key(person_id)
+            self.redis.sadd(person_exhibits_key, exhibit_id)
+
+        print('Експонат додано')
+
+    def delete_exhibit(self, exhibit_id):
+        if not self._check_login():
+            return
+
+        exhibit_key = self._get_exhibit_key(exhibit_id)
+
+        if not self.redis.exists(exhibit_key):
+            print('Немає експоната в базі даних музею')
+            return
+
+        # видалення даних про експонат
+        self.redis.delete(exhibit_key)
+
+        # пов'язані люди
+        exhibit_people_key = self._get_exhibit_people_key(exhibit_id)
+        people = self.redis.smembers(exhibit_people_key)
+        self.redis.delete(exhibit_people_key)
+
+        # видалення експонату з даних людей
+        for person_id in people:
+            person_exhibits_key = self._get_person_exhibits_key(person_id)
+            self.redis.srem(person_exhibits_key, exhibit_id)
+
+        print('Дані про експонат видалено')
+
+    def view_exhibit_info(self, exhibit_id):
+        if not self._check_login():
+            return
+
+        exhibit_key = self._get_exhibit_key(exhibit_id)
+
+        if not self.redis.exists(exhibit_key):
+            print('Немає експоната в базі даних музею')
+            return
+
+        exhibit_data = self.redis.hgetall(exhibit_key)
+
+        print(f'\t\t Назва: {exhibit_data.get("name", "Невідомо")}')
+        print(f'\t\t Опис: {exhibit_data.get("description", "Невідомо")}')
+        print(f'\t\t Адміністратор, що вніс дані: {exhibit_data.get("admin", "Невідомо")}')
+
+        exhibit_people_key = self._get_exhibit_people_key(exhibit_id)
+
+        people = self.redis.smembers(exhibit_people_key)
+
+        if people:
+            print('\t\t\t Пов\'язані особистості: ', *people)
+
+    def view_all_exhibits(self):
+        pattern_key = self._get_exhibit_key('*')
+        exhibits_keys = self.redis.keys(pattern=pattern_key)
+
+        for key in exhibits_keys:
+            exhibit_id = key.split(':')[-1]
+
+            if exhibit_id.isdigit():
+                print(f'Дані про експонат з ID {exhibit_id}')
+                self.view_exhibit_info(exhibit_id)
+
+                print()
+
+
+musuem = Museum()
+
+while True:
+    print('Оберіть функцію')
+    print('1. Реєстрація адміністратору музею')
+    print('2. Вхід')
+    print('3. Додати експонат')
+    print('4. Видалити експонат')
+    print('5. Вивести інформацію про експонат')
+    print('6. Вивести інформацію про всі експонати')
+
+    command = int(input('Введіть номер команди: '))
+
+    if command == 1:
+        admin_id = int(input('Введіть id адміністратора: '))
+        password = input('Введіть пароль: ')
+
+        musuem.add_admin(admin_id, password)
+        print('=====================================')
+        print('=====================================')
+
+    elif command == 2:
+        admin_id = int(input('Введіть id адміністратора: '))
+        password = input('Введіть пароль: ')
+
+        musuem.login(admin_id, password)
+        print('=====================================')
+        print('=====================================')
+
+    elif command == 3:
+        exhibit_id = int(input('Введіть id експоната: '))
+
+        exhibit_data = {
+            'name': input('введіть ім\'я експоната: '),
+            'description': input('введіть опис експоната: '),
+            'people': input('введіть пов\'язаних з експонатом людей: ').split(',')
+        }
+
+        musuem.add_exhibit(exhibit_id, exhibit_data)
+        print('=====================================')
+        print('=====================================')
+
+    elif command == 4:
+        exhibit_id = int(input('Введіть id експоната: '))
+
+        musuem.delete_exhibit(exhibit_id)
+        print('=====================================')
+        print('=====================================')
+
+    elif command == 5:
+        exhibit_id = int(input('Введіть id експоната: '))
+
+        musuem.view_exhibit_info(exhibit_id)
+        print('=====================================')
+        print('=====================================')
+
+    elif command == 6:
+        musuem.view_all_exhibits()
+        print('=====================================')
+        print('=====================================')
